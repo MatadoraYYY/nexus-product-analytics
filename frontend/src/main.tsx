@@ -57,18 +57,23 @@ function App() {
 
   const d = data?.overview;
   const cards = useMemo(() => d ? [
-    ['DAU', fmt(d.dau)], ['MAU', fmt(d.mau)], ['Stickiness', fmt(d.stickiness, true)],
-    ['Activation', fmt(d.activation_rate, true)], ['D30 Retention', fmt(d.d30_retention, true)],
-    ['MRR', `$${fmt(d.mrr)}`], ['Churn', fmt(d.churn, true)], ['LTV:CAC', fmt(d.ltv_cac)],
+    ['DAU', fmt(d.dau)],
+    ['MAU', fmt(d.mau)],
+    ['Стикiness', fmt(d.stickiness, true)],
+    ['Активация', fmt(d.activation_rate, true)],
+    ['Удержание D30', fmt(d.d30_retention, true)],
+    ['MRR', `$${fmt(d.mrr)}`],
+    ['Отток', fmt(d.churn, true)],
+    ['LTV:CAC', fmt(d.ltv_cac)],
   ] : [], [d]);
 
-  if (error && !data) return <main className="shell"><section className="state"><div className="brand">NEXUS</div><h1>Product Intelligence</h1><p>{error}</p><span>Повторяем подключение автоматически…</span></section></main>;
+  if (error && !data) return <main className="shell"><section className="state"><div className="brand">NEXUS</div><h1>Продуктовая аналитика</h1><p>{error}</p><span>Повторяем подключение автоматически…</span></section></main>;
   if (!data || !d) return <main className="shell"><section className="state"><div className="spinner" /><div className="brand">NEXUS</div><h1>Загрузка аналитики</h1><p>Подключаемся к аналитическому API и готовим показатели.</p></section></main>;
 
   return <main className="shell">
     <header className="topbar">
-      <div><div className="brand">NEXUS</div><h1>Product Intelligence</h1><p className="subtitle">Продуктовая аналитика в одном окне</p></div>
-      <div className="statusBlock"><span className="status"><i /> API ONLINE</span><span className="period">Период: {d.period}</span></div>
+      <div><div className="brand">NEXUS</div><h1>Продуктовая аналитика</h1><p className="subtitle">Ключевые продуктовые и коммерческие показатели</p></div>
+      <div className="statusBlock"><span className="status"><i /> API РАБОТАЕТ</span><span className="period">Период: {d.period}</span></div>
     </header>
 
     <section className="grid" aria-label="Ключевые показатели">
@@ -76,24 +81,24 @@ function App() {
     </section>
 
     <section className="panel">
-      <div className="panelHead"><div><h2>Воронка привлечения</h2><p>Конверсия между ключевыми этапами</p></div><span className="pill">LIVE</span></div>
+      <div className="panelHead"><div><h2>Воронка привлечения</h2><p>Конверсия между ключевыми этапами</p></div><span className="pill">АКТУАЛЬНО</span></div>
       <div className="chart"><Plot data={[{type:'funnel', y:data.funnel.map(x=>x.step), x:data.funnel.map(x=>x.users), textinfo:'value+percent initial', hovertemplate:'%{y}<br>%{x:,} пользователей<extra></extra>'}]} layout={{height:380, margin:{l:150,r:30,t:12,b:24}, paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{family:'Inter,system-ui,sans-serif'}}} config={{displayModeBar:false, responsive:true}} useResizeHandler style={{width:'100%',height:'100%'}} /></div>
     </section>
 
     <section className="panel">
-      <div className="panelHead"><div><h2>Выручка</h2><p>Net revenue и MRR по месяцам</p></div></div>
-      <div className="chart"><Plot data={[{x:data.revenue.map(x=>x.month), y:data.revenue.map(x=>x.net_revenue), type:'scatter', mode:'lines+markers', name:'Net revenue', line:{width:3}}, {x:data.revenue.map(x=>x.month), y:data.revenue.map(x=>x.mrr), type:'scatter', mode:'lines+markers', name:'MRR', line:{width:3}}]} layout={{height:360, margin:{l:55,r:20,t:12,b:55}, paper_bgcolor:'transparent', plot_bgcolor:'transparent', legend:{orientation:'h',y:-0.18}, hovermode:'x unified', font:{family:'Inter,system-ui,sans-serif'}}} config={{displayModeBar:false, responsive:true}} useResizeHandler style={{width:'100%',height:'100%'}} /></div>
+      <div className="panelHead"><div><h2>Выручка</h2><p>Чистая выручка и MRR по месяцам</p></div></div>
+      <div className="chart"><Plot data={[{x:data.revenue.map(x=>x.month), y:data.revenue.map(x=>x.net_revenue), type:'scatter', mode:'lines+markers', name:'Чистая выручка', line:{width:3}}, {x:data.revenue.map(x=>x.month), y:data.revenue.map(x=>x.mrr), type:'scatter', mode:'lines+markers', name:'MRR', line:{width:3}}]} layout={{height:360, margin:{l:55,r:20,t:12,b:55}, paper_bgcolor:'transparent', plot_bgcolor:'transparent', legend:{orientation:'h',y:-0.18}, hovermode:'x unified', font:{family:'Inter,system-ui,sans-serif'}}} config={{displayModeBar:false, responsive:true}} useResizeHandler style={{width:'100%',height:'100%'}} /></div>
     </section>
 
     <section className="panel">
       <div className="panelHead"><div><h2>Использование функций</h2><p>Нажмите на функцию, чтобы открыть детали</p></div></div>
-      <div className="tableHead"><span>Функция</span><span>Adoption</span><span>D30</span></div>
+      <div className="tableHead"><span>Функция</span><span>Доля пользователей</span><span>D30</span></div>
       <div className="table">{data.features.map((x) => <button className="row rowButton" key={x.feature_name} type="button" onClick={() => setSelectedFeature(x)}><b>{x.feature_name}</b><span>{fmt(x.adoption_rate, true)}</span><span>{fmt(x.d30_retention, true)}</span></button>)}</div>
     </section>
 
-    {selectedFeature && <div className="modalBackdrop" role="presentation" onClick={() => setSelectedFeature(null)}><section className="modal" role="dialog" aria-modal="true" aria-label="Детали функции" onClick={(e) => e.stopPropagation()}><div className="modalHead"><div><span className="brand">FEATURE</span><h3>{selectedFeature.feature_name}</h3></div><button className="close" type="button" onClick={() => setSelectedFeature(null)} aria-label="Закрыть">×</button></div><div className="detailGrid"><div><span>Adoption</span><strong>{fmt(selectedFeature.adoption_rate, true)}</strong></div><div><span>D30 retention</span><strong>{fmt(selectedFeature.d30_retention, true)}</strong></div></div></section></div>}
+    {selectedFeature && <div className="modalBackdrop" role="presentation" onClick={() => setSelectedFeature(null)}><section className="modal" role="dialog" aria-modal="true" aria-label="Детали функции" onClick={(e) => e.stopPropagation()}><div className="modalHead"><div><span className="brand">ФУНКЦИЯ</span><h3>{selectedFeature.feature_name}</h3></div><button className="close" type="button" onClick={() => setSelectedFeature(null)} aria-label="Закрыть">×</button></div><div className="detailGrid"><div><span>Доля пользователей</span><strong>{fmt(selectedFeature.adoption_rate, true)}</strong></div><div><span>Удержание D30</span><strong>{fmt(selectedFeature.d30_retention, true)}</strong></div></div></section></div>}
 
-    <footer><span>Data refresh: каждые 5 секунд</span><span>{lastUpdated ? `Обновлено ${lastUpdated.toLocaleTimeString('ru-RU')}` : ''}</span></footer>
+    <footer><span>Обновление данных: каждые 5 секунд</span><span>{lastUpdated ? `Обновлено ${lastUpdated.toLocaleTimeString('ru-RU')}` : ''}</span></footer>
   </main>;
 }
 
