@@ -3,13 +3,16 @@ import { createRoot } from 'react-dom/client';
 import Plot from 'react-plotly.js';
 import './styles.css';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'https://nexus-product-analytics-api.onrender.com';
+const API = (import.meta.env.VITE_API_BASE_URL || 'https://nexus-product-analytics-api-live.onrender.com').replace(/\/$/, '');
 
 type Overview = Record<string, number | string | null>;
 
 async function getJson(path: string) {
   const response = await fetch(`${API}/api/v1/${path}`);
-  if (!response.ok) throw new Error(`API ${response.status}`);
+  if (!response.ok) {
+    if (response.status === 503) throw new Error('Analytics pipeline is still warming up.');
+    throw new Error(`API ${response.status}`);
+  }
   return response.json();
 }
 
@@ -31,7 +34,7 @@ function App() {
         if (!cancelled) setData({ overview, funnel, revenue, features });
         if (!cancelled) setError('');
       } catch (e) {
-        if (!cancelled) setError(String(e));
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       }
     };
     load();
@@ -39,7 +42,7 @@ function App() {
     return () => { cancelled = true; window.clearInterval(timer); };
   }, []);
 
-  if (error && !data) return <main><h1>NEXUS</h1><p>Analytics API is warming up. Retrying automatically…</p><small>{error}</small></main>;
+  if (error && !data) return <main><h1>NEXUS</h1><p>{error}</p><small>Retrying automatically…</small></main>;
   if (!data) return <main><h1>NEXUS</h1><p>Loading analytics…</p></main>;
 
   const d = data.overview;
