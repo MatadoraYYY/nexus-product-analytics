@@ -6,10 +6,14 @@ from fastapi.responses import JSONResponse
 from src.nexus.pipeline import run
 
 db_path=os.getenv("DUCKDB_PATH","data/nexus.duckdb")
-if not Path(db_path).exists(): run()
 app=FastAPI(title="NEXUS Product Intelligence API",version="1.0.0")
 origins=[x.strip() for x in os.getenv("CORS_ORIGINS","http://localhost:5173").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware,allow_origins=origins,allow_methods=["GET"],allow_headers=["*"])
+
+@app.on_event("startup")
+def startup_pipeline():
+    if not Path(db_path).exists():
+        run()
 
 @app.middleware("http")
 async def request_id(request:Request,call_next):
@@ -27,7 +31,8 @@ def health():return {"status":"ok"}
 def overview():
     d=q("SELECT * FROM mart_daily_kpis ORDER BY date DESC LIMIT 1").iloc[0]; r=q("SELECT * FROM mart_revenue_monthly ORDER BY month DESC LIMIT 1").iloc[0]; e=q("SELECT * FROM mart_customer_economics ORDER BY month DESC LIMIT 1").iloc[0]
     a=float(q("SELECT AVG(activated_flag) rate FROM mart_activation").iloc[0]["rate"])
-    return {"period":str(r["month"]),"dau":int(d.dau),"mau":int(d.mau),"stickiness":d.stickiness,"activation_rate":a,"d30_retention":None,"mrr":float(r.mrr),"churn":e.churn,"arpu":e.arpu,"arppu":e.arppu,"ltv":e.ltv,"cac":e.cac,"ltv_cac":e.ltv_cac}
+    d30=q("SELECT AVG(retention_rate) rate FROM mart_retention WHERE age_day=30").iloc[0]["rate"]
+    return {"period":str(r["month"]),"dau":int(d.dau),"mau":int(d.mau),"stickiness":d.stickiness,"activation_rate":a,"d30_retention":d30,"mrr":float(r.mrr),"churn":e.churn,"arpu":e.arpu,"arppu":e.arppu,"ltv":e.ltv,"cac":e.cac,"ltv_cac":e.ltv_cac}
 
 @app.get("/api/v1/funnel")
 def funnel():return q("SELECT * FROM mart_funnel").to_dict("records")
