@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import Plot from 'react-plotly.js';
+import createPlotlyComponent from 'react-plotly.js/factory';
+import Plotly from 'plotly.js-dist-min';
 import './styles.css';
 
+const Plot = createPlotlyComponent(Plotly);
 const API = (import.meta.env.VITE_API_BASE_URL || 'https://nexus-product-analytics-api-live.onrender.com').replace(/\/$/, '');
 
 type Overview = Record<string, number | string | null>;
