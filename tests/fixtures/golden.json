@@ -1,0 +1,7 @@
+{
+  "activation_rate": 0.4,
+  "stickiness": 0.4,
+  "drop_off": 0.6,
+  "ltv": 480.0,
+  "ltv_cac": 4.8
+}
