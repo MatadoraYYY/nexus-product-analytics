@@ -1,5 +1,22 @@
 services:
   - type: web
+    name: nexus-product-analytics-api-live
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.nexus_api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://nexus-product-analytics-dashboard.onrender.com
+      - key: GROSS_MARGIN
+        value: "0.80"
+      - key: NEXUS_RENDER_USERS
+        value: "5000"
+  - type: web
     name: nexus-product-analytics-api
     runtime: python
     plan: free
@@ -14,3 +31,10 @@ services:
         sync: false
       - key: GROSS_MARGIN
         value: "0.80"
+  - type: static
+    name: nexus-product-analytics-dashboard
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://nexus-product-analytics-api-live.onrender.com
