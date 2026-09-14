@@ -22,7 +22,7 @@ def _build_pipeline():
     try:
         run()
         _pipeline_state["status"] = "ready"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         _pipeline_state["status"] = "error"
         _pipeline_state["error"] = str(exc)
 
@@ -59,15 +59,7 @@ def health():
 
 def _require_ready():
     if _pipeline_state["status"] != "ready" or not Path(db_path).exists():
-        return JSONResponse(
-            status_code=503,
-            content={
-                "error": {
-                    "code": "ANALYTICS_NOT_READY",
-                    "message": "Analytics dataset is still being prepared.",
-                }
-            },
-        )
+        return JSONResponse(status_code=503, content={"error": {"code": "ANALYTICS_NOT_READY", "message": "Analytics dataset is still being prepared."}})
     return None
 
 
@@ -81,21 +73,7 @@ def overview():
     e = q("SELECT * FROM mart_customer_economics ORDER BY month DESC LIMIT 1").iloc[0]
     a = float(q("SELECT AVG(activated_flag) rate FROM mart_activation").iloc[0]["rate"])
     d30 = q("SELECT AVG(retention_rate) rate FROM mart_retention WHERE age_day=30").iloc[0]["rate"]
-    return {
-        "period": str(r["month"]),
-        "dau": int(d.dau),
-        "mau": int(d.mau),
-        "stickiness": d.stickiness,
-        "activation_rate": a,
-        "d30_retention": d30,
-        "mrr": float(r.mrr),
-        "churn": e.churn,
-        "arpu": e.arpu,
-        "arppu": e.arppu,
-        "ltv": e.ltv,
-        "cac": e.cac,
-        "ltv_cac": e.ltv_cac,
-    }
+    return {"period": str(r["month"]), "dau": int(d.dau), "mau": int(d.mau), "stickiness": d.stickiness, "activation_rate": a, "d30_retention": d30, "mrr": float(r.mrr), "churn": e.churn, "arpu": e.arpu, "arppu": e.arppu, "ltv": e.ltv, "cac": e.cac, "ltv_cac": e.ltv_cac}
 
 
 @app.get("/api/v1/funnel")
@@ -130,13 +108,4 @@ def cohorts():
 
 @app.exception_handler(Exception)
 async def safe_error(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": {
-                "code": "INTERNAL_ERROR",
-                "message": "Internal server error",
-                "request_id": getattr(request.state, "request_id", "unknown"),
-            }
-        },
-    )
+    return JSONResponse(status_code=500, content={"error": {"code": "INTERNAL_ERROR", "message": "Internal server error", "request_id": getattr(request.state, "request_id", "unknown")}})
