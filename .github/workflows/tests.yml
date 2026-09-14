@@ -13,6 +13,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: ruff check src api tests --fix --ignore F401
+      - run: ruff format --check src api tests
       - run: ruff check src api tests --ignore F401
       - run: pytest -q
