@@ -1,11 +1,22 @@
 from __future__ import annotations
+
 import pandas as pd
 
-ALLOWED_EVENTS = {"signup","login","project_created","task_created","team_invited","feature_used",
-                  "checkout_started","subscription_started","subscription_cancelled"}
-ALLOWED_FEATURES = {"kanban","calendar","automation","reports","integrations","ai_assistant"}
-ALLOWED_DEVICES = {"web","ios","android"}
-ALLOWED_CHANNELS = {"organic","paid_search","paid_social","referral","partner","content"}
+ALLOWED_EVENTS = {
+    "signup",
+    "login",
+    "project_created",
+    "task_created",
+    "team_invited",
+    "feature_used",
+    "checkout_started",
+    "subscription_started",
+    "subscription_cancelled",
+}
+ALLOWED_FEATURES = {"kanban", "calendar", "automation", "reports", "integrations", "ai_assistant"}
+ALLOWED_DEVICES = {"web", "ios", "android"}
+ALLOWED_CHANNELS = {"organic", "paid_search", "paid_social", "referral", "partner", "content"}
+
 
 def validate(users, events, payments, subscriptions, marketing) -> dict[str, int]:
     return {
@@ -23,7 +34,8 @@ def validate(users, events, payments, subscriptions, marketing) -> dict[str, int
         "future_events": int((events.event_date > pd.Timestamp("2026-06-30").date()).sum()),
     }
 
-def assert_valid(checks: dict[str,int]) -> None:
-    failures = {k:v for k,v in checks.items() if v}
+
+def assert_valid(checks: dict[str, int]) -> None:
+    failures = {k: v for k, v in checks.items() if v}
     if failures:
         raise ValueError(f"Data quality checks failed: {failures}")
