@@ -94,7 +94,8 @@ def build_marts(users, events, payments, subscriptions, marketing, gross_margin=
         ].nunique()
         previous_month = str(pd.Period(month) - 1)
         previous_paying = paying_by_month.get(previous_month)
-        churn = max(previous_paying - current_paying, 0) / previous_paying if previous_paying else None
+        churned_users = sub.loc[sub.end_month.eq(month), "user_id"].nunique()
+        churn = churned_users / previous_paying if previous_paying else None
         revenue = float(rev.loc[rev.month.eq(month), "net_revenue"].iloc[0])
         arpu = revenue / active_users if active_users else None
         arppu = revenue / current_paying if current_paying else None
