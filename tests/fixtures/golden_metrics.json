@@ -1,6 +1,6 @@
 {
-  "activation_rate": {"input": {"activated": 40, "registered": 100}, "expected": 0.4},
+  "activation_rate": {"input": {"activated_users": 40, "registered_users": 100}, "expected": 0.4},
   "stickiness": {"input": {"dau": 20, "mau": 50}, "expected": 0.4},
   "ltv": {"input": {"arpu": 30, "gross_margin": 0.8, "monthly_churn": 0.05}, "expected": 480.0},
-  "ltv_cac": {"input": {"ltv_value": 480, "cac_value": 80}, "expected": 6.0}
+  "ltv_cac": {"input": {"ltv_value": 480, "cac": 80}, "expected": 6.0}
 }
