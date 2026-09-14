@@ -7,12 +7,27 @@ ACTIVE = {"login", "project_created", "task_created", "feature_used"}
 
 
 def build_marts(users, events, payments, subscriptions, marketing, gross_margin=0.8):
+    users = users.copy()
+    events = events.copy()
+    payments = payments.copy()
+    subscriptions = subscriptions.copy()
+    marketing = marketing.copy()
+    for frame, columns in [
+        (users, ["registration_date"]),
+        (events, ["event_date"]),
+        (payments, ["payment_date"]),
+        (subscriptions, ["start_date", "end_date"]),
+        (marketing, ["date"]),
+    ]:
+        for column in columns:
+            frame[column] = pd.to_datetime(frame[column], errors="coerce")
+
     active_events = events[events.event_name.isin(ACTIVE)]
     daily = []
     for day in pd.date_range(events.event_date.min(), events.event_date.max()).date:
-        dau = active_events[active_events.event_date.eq(day)].user_id.nunique()
-        wau = active_events[active_events.event_date.between(day - pd.Timedelta(6, "d"), day)].user_id.nunique()
-        mau = active_events[active_events.event_date.between(day - pd.Timedelta(29, "d"), day)].user_id.nunique()
+        dau = active_events[active_events.event_date.dt.date.eq(day)].user_id.nunique()
+        wau = active_events[active_events.event_date.between(pd.Timestamp(day) - pd.Timedelta(6, "d"), pd.Timestamp(day))].user_id.nunique()
+        mau = active_events[active_events.event_date.between(pd.Timestamp(day) - pd.Timedelta(29, "d"), pd.Timestamp(day))].user_id.nunique()
         daily.append({"date": day, "dau": dau, "wau": wau, "mau": mau, "stickiness": stickiness(dau, mau)})
 
     first_project = events[events.event_name.eq("project_created")].groupby("user_id").event_date.min().rename("project_date")
@@ -49,7 +64,7 @@ def build_marts(users, events, payments, subscriptions, marketing, gross_margin=
     retention["retention_rate"] = retention.retained_users / retention.cohort_size
 
     pay = payments.copy()
-    pay["month"] = pd.to_datetime(pay.payment_date).dt.to_period("M").astype(str)
+    pay["month"] = pay.payment_date.dt.to_period("M").astype(str)
     rev = pay.groupby(["month", "payment_type"]).amount.sum().unstack(fill_value=0).reset_index()
     for payment_type in ["payment", "refund", "chargeback"]:
         if payment_type not in rev:
@@ -60,8 +75,8 @@ def build_marts(users, events, payments, subscriptions, marketing, gross_margin=
     rev["net_revenue"] = rev.gross_revenue - rev.refunds - rev.chargebacks
 
     sub = subscriptions.copy()
-    sub["start_month"] = pd.to_datetime(sub.start_date).dt.to_period("M").astype(str)
-    sub["end_month"] = pd.to_datetime(sub.end_date).dt.to_period("M").astype("string")
+    sub["start_month"] = sub.start_date.dt.to_period("M").astype(str)
+    sub["end_month"] = sub.end_date.dt.to_period("M").astype("string")
     rev["mrr"] = rev.month.map(
         lambda month: sub.loc[
             (sub.start_month <= month) & (sub.end_month.isna() | sub.end_month.gt(month)), "monthly_price"
@@ -71,21 +86,15 @@ def build_marts(users, events, payments, subscriptions, marketing, gross_margin=
     monthly_rows = []
     paying_by_month = {}
     start_by_month = sub.groupby("start_month").user_id.nunique().to_dict()
-    spend_by_month = marketing.assign(month=pd.to_datetime(marketing.date).dt.to_period("M").astype(str)).groupby("month").spend.sum().to_dict()
+    spend_by_month = marketing.assign(month=marketing.date.dt.to_period("M").astype(str)).groupby("month").spend.sum().to_dict()
     for month in rev.month:
-        active_users = active_events.loc[
-            active_events.event_date.astype(str).str[:7].eq(month), "user_id"
-        ].nunique()
+        active_users = active_events.loc[active_events.event_date.dt.to_period("M").astype(str).eq(month), "user_id"].nunique()
         current_paying = sub.loc[
             (sub.start_month <= month) & (sub.end_month.isna() | sub.end_month.gt(month)), "user_id"
         ].nunique()
         previous_month = str(pd.Period(month) - 1)
         previous_paying = paying_by_month.get(previous_month)
-        churn = (
-            max(previous_paying - current_paying, 0) / previous_paying
-            if previous_paying
-            else None
-        )
+        churn = max(previous_paying - current_paying, 0) / previous_paying if previous_paying else None
         revenue = float(rev.loc[rev.month.eq(month), "net_revenue"].iloc[0])
         arpu = revenue / active_users if active_users else None
         arppu = revenue / current_paying if current_paying else None
