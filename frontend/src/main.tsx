@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import Plot from 'react-plotly.js';
 import './styles.css';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API = import.meta.env.VITE_API_BASE_URL || 'https://nexus-product-analytics-api.onrender.com';
 
 type Overview = Record<string, number | string | null>;
 
@@ -29,6 +29,7 @@ function App() {
       try {
         const [overview, funnel, revenue, features] = await Promise.all([getJson('overview'), getJson('funnel'), getJson('revenue'), getJson('features')]);
         if (!cancelled) setData({ overview, funnel, revenue, features });
+        if (!cancelled) setError('');
       } catch (e) {
         if (!cancelled) setError(String(e));
       }
