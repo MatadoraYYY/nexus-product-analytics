@@ -37,7 +37,9 @@ def drop_off(next_users: int, previous_users: int) -> float | None:
     return None if c is None else 1 - c
 
 
-def ltv(arpu: float, gross_margin: float, monthly_churn: float) -> float | None:
+def ltv(arpu: float | None, gross_margin: float, monthly_churn: float | None) -> float | None:
+    if arpu is None or monthly_churn is None:
+        return None
     if arpu < 0 or not 0 <= gross_margin <= 1 or monthly_churn < 0:
         raise ValueError("Invalid LTV inputs")
     return None if monthly_churn == 0 else arpu * gross_margin / monthly_churn
