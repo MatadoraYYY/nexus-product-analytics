@@ -13,17 +13,16 @@ from src.nexus.validation.checks import assert_valid, validate
 
 def run():
     s = Settings()
-    Path(s.data_dir).mkdir(exist_ok=True)
+    Path(s.data_dir).mkdir(parents=True, exist_ok=True)
     cfg = GeneratorConfig(seed=s.seed)
     users = generate_users(cfg)
     events = generate_events(users, cfg)
     subscriptions, payments, marketing = generate_financials(users, events, cfg)
     checks = validate(users, events, payments, subscriptions, marketing)
     assert_valid(checks)
-    marts = build_marts(
-        users, events, payments, subscriptions, marketing, s.gross_margin
-    )
+    marts = build_marts(users, events, subscriptions=subscriptions, payments=payments, marketing=marketing, gross_margin=s.gross_margin)
     db = __import__("duckdb")
+    Path(s.duckdb_path).parent.mkdir(parents=True, exist_ok=True)
     con = db.connect(s.duckdb_path)
     tables = {
         "dim_users": users,
