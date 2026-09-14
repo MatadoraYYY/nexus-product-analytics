@@ -39,9 +39,12 @@ def build_marts(users, events, payments, subscriptions, marketing, gross_margin=
     ).astype(int)
 
     signup = users.user_id.nunique()
-    activated = int(activation.activated_flag.sum())
-    checkout = events[events.event_name.eq("checkout_started")].user_id.nunique()
-    paid = events[events.event_name.eq("subscription_started")].user_id.nunique()
+    activated_users = set(activation.loc[activation.activated_flag.eq(1), "user_id"])
+    checkout_users = set(events.loc[events.event_name.eq("checkout_started"), "user_id"]) & activated_users
+    paid_users = set(events.loc[events.event_name.eq("subscription_started"), "user_id"]) & checkout_users
+    activated = len(activated_users)
+    checkout = len(checkout_users)
+    paid = len(paid_users)
     funnel = pd.DataFrame(
         [
             ["Signup", signup, 1, 0],
