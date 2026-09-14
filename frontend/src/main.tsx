@@ -1,0 +1,3 @@
+import React,{useEffect,useState} from 'react';import{createRoot}from'react-dom/client';import'./styles.css';
+const API=import.meta.env.VITE_API_BASE_URL||'http://localhost:8000';
+function App(){const[d,setD]=useState(null);useEffect(()=>{fetch(API+'/api/v1/overview').then(r=>r.json()).then(setD)},[]);if(!d)return <main><h1>NEXUS</h1><p>Loading analytics…</p></main>;return <main><header><span>NEXUS</span><h1>Product Intelligence</h1><small>{d.period}</small></header><section className="grid">{[['DAU',d.dau],['MAU',d.mau],['Stickiness',d.stickiness],['Activation',d.activation_rate],['MRR',d.mrr]].map(x=><article><small>{x[0]}</small><strong>{x[1]}</strong></article>)}</section></main>};createRoot(document.getElementById('root')!).render(<App/>);
